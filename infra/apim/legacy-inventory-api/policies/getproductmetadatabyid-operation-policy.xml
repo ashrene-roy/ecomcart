@@ -1,0 +1,82 @@
+<policies>
+    <inbound>
+        <base />
+        <set-variable name="productId" value="@(context.Request.Body.As&lt;JObject&gt;()[&quot;getProductMetadataById&quot;][&quot;productId&quot;])" />
+        <!-- Check the cache store if the desired key exists -->
+        <cache-lookup-value key="@(&quot;productmetadata-&quot; + context.Variables[&quot;productId&quot;])" variable-name="productmetadata" />
+        <choose>
+            <!-- If key doesn't exist (miss), then call the backend service to get the value -->
+            <when condition="@(!context.Variables.ContainsKey(&quot;productmetadata&quot;))">
+                <send-request mode="new" response-variable-name="productmetadatabyidresponse" timeout="10" ignore-error="true">
+                    <set-url>{{LegacyInventoryBackendUrl}}</set-url>
+                    <set-method>POST</set-method>
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>text/xml</value>
+                    </set-header>
+                    <set-header name="SOAPAction" exists-action="override">
+                        <value>"http://tempuri.org/IProductService/GetProductMetadataById"</value>
+                    </set-header>
+                    <set-header name="x-api-key" exists-action="override">
+                        <value>{{LegacyInventoryApiSecret}}</value>
+                    </set-header>
+                    <set-body template="liquid">
+						<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns="http://tempuri.org/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+							<soap:Body>
+								<GetProductMetadataById>
+                                    {% if context.variables["productId"] %}
+                                    <productId>{{context.variables["productId"]}}</productId>
+                                    {% else %}
+                                    <productId xsi:nil="true" />
+                                    {% endif %}
+                                </GetProductMetadataById>
+							</soap:Body>
+						</soap:Envelope>
+					</set-body>
+                </send-request>
+                <set-variable name="xmlResponseAsString" value="@(((IResponse)context.Variables[&quot;productmetadatabyidresponse&quot;]).Body.As&lt;string&gt;())" />
+                <set-variable name="jsonResponse" value="@{
+                    var jsonResult = new JObject();
+                    var xmlResponse = XElement.Parse(context.Variables.GetValueOrDefault&lt;string&gt;(&quot;xmlResponseAsString&quot;));
+                    string ExtractValue(string elementName)
+                    {
+                        return xmlResponse.Descendants().FirstOrDefault(e => e.Name.LocalName == elementName)?.Value;
+                    }
+                    if (ExtractValue(&quot;GetProductMetadataByIdResult&quot;) != null)
+                    {
+                        jsonResult[&quot;productListingImageUrl&quot;] = ExtractValue(&quot;productListingImageUrl&quot;);
+                        jsonResult[&quot;productThumbnailLImageUrl&quot;] = ExtractValue(&quot;productThumbnailLImageUrl&quot;);
+                        jsonResult[&quot;productThumbnailMImageUrl&quot;] = ExtractValue(&quot;productThumbnailMImageUrl&quot;);
+                        jsonResult[&quot;productThumbnailSImageUrl&quot;] = ExtractValue(&quot;productThumbnailSImageUrl&quot;);
+                    }
+                    return jsonResult.ToString();
+                }" />
+                <set-variable name="productmetadata" value="@((string)context.Variables[&quot;jsonResponse&quot;])" />
+                <!-- Store that value in the cache store against a key, for next usage -->
+                <cache-store-value key="@(&quot;productmetadata-&quot; + context.Variables[&quot;productId&quot;])" value="@((string)context.Variables[&quot;jsonResponse&quot;])" duration="@{
+                    var header = ((IResponse)context.Variables[&quot;productmetadatabyidresponse&quot;]).Headers.GetValueOrDefault(&quot;Cache-Control&quot;,&quot;&quot;);
+                    var maxAge = Regex.Match(header, @&quot;max-age=(?&lt;maxAge&gt;\d+)&quot;).Groups[&quot;maxAge&quot;]?.Value;
+                    var duration = (maxAge == &quot;0&quot;)? &quot;1&quot;:maxAge;
+                    return (!string.IsNullOrEmpty(duration))?int.Parse(duration):300;
+                }" />
+            </when>
+            <!-- If key exists (hit), then return the value of that key -->
+            <otherwise />
+        </choose>
+    </inbound>
+    <outbound>
+        <base />
+        <return-response>
+            <set-status code="200" />
+            <set-header name="Content-Type" exists-action="override">
+                <value>application/json</value>
+            </set-header>
+            <set-body>@{
+                return (string)context.Variables[&quot;productmetadata&quot;];
+            }</set-body>
+        </return-response>
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+    <backend />
+</policies>
