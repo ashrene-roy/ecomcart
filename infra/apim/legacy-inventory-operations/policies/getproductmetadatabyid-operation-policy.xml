@@ -8,7 +8,7 @@
             <!-- If key doesn't exist (miss), then call the backend service to get the value -->
             <when condition="@(!context.Variables.ContainsKey(&quot;productmetadata&quot;))">
                 <send-request mode="new" response-variable-name="productmetadatabyidresponse" timeout="10" ignore-error="true">
-                    <set-url>{{LegacyInventoryBackendUrl}}</set-url>
+                    <set-url>{{LegacyInventoryBackendUrl}}/LegacyInventoryService.wsdl</set-url>
                     <set-method>POST</set-method>
                     <set-header name="Content-Type" exists-action="override">
                         <value>text/xml</value>
