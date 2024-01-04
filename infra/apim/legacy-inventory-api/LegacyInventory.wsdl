@@ -247,7 +247,7 @@
     </wsdl:binding>
     <wsdl:service name="IProductService">
         <wsdl:port name="BasicHttpBinding_IProductService" binding="tns:BasicHttpBinding_IProductService">
-            <soap:address location="@@LegacyInventoryServiceURL@@" />
+            <soap:address location="@@LegacyInventoryServiceURL@@/LegacyInventoryService.wsdl" />
         </wsdl:port>
     </wsdl:service>
 </wsdl:definitions>
