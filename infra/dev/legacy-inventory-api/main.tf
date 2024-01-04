@@ -18,7 +18,7 @@ provider "azurerm" {
 }
 
 module "api" {
-  source = "../modules/api"
+  source = "../../modules/apim/api/v1"
   api = {
     name           = var.api_name
     revision       = var.api_revision
@@ -32,7 +32,7 @@ module "api" {
 }
 
 module "named_value_1" {
-  source              = "../modules/named_value"
+  source              = "../../modules/apim/named_value/v1"
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   named_value = {
@@ -43,7 +43,7 @@ module "named_value_1" {
 }
 
 module "named_value_2" {
-  source              = "../modules/named_value"
+  source              = "../../modules/apim/named_value/v1"
   api_management_name = var.api_management_name
   resource_group_name = var.resource_group_name
   named_value = {
@@ -54,7 +54,7 @@ module "named_value_2" {
 }
 
 module "api_policy" {
-  source     = "../modules/api_policy"
+  source     = "../../modules/apim/api_policy/v1"
   depends_on = [module.api, module.named_value_1, module.named_value_2]
   api = {
     name             = var.api_name

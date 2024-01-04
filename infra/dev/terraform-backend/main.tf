@@ -12,14 +12,14 @@ provider "azurerm" {
 }
 
 module "storage_account" {
-  source                   = "../modules/storage_account"
+  source                   = "../../modules/storage/storage_account/v1"
   resource_group_name      = var.resource_group_name
   storage_account_location = var.storage_account_location
   storage_account_name     = var.storage_account_name
 }
 
 module "storage_container" {
-  source                 = "../modules/storage_container"
+  source                 = "../../modules/storage/storage_container/v1"
   depends_on             = [module.storage_account]
   storage_account_name   = var.storage_account_name
   storage_container_name = var.storage_container_name
