@@ -13,6 +13,8 @@ jobs:
       ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_subscription_id: ${{ secrets.TF_VAR_SUBSCRIPTION_ID }}
+      TF_VAR_named_value_value_2: ${{ secrets.TF_VAR_NAMED_VALUE_VALUE_2 }}
       TF_VAR_storage_account_name: ${{ vars.TF_VAR_STORAGE_ACCOUNT_NAME }}
       TF_VAR_storage_account_location: ${{ vars.TF_VAR_STORAGE_ACCOUNT_LOCATION }}
       TF_VAR_storage_container_name: ${{ vars.TF_VAR_STORAGE_CONTAINER_NAME }}
@@ -21,8 +23,8 @@ jobs:
       TF_VAR_api_policy_file_path: ${{ vars.TF_VAR_API_POLICY_FILE_PATH }}
       TF_VAR_api_content_value: ${{ vars.TF_VAR_API_CONTENT_VALUE }}
       TF_VAR_named_value_value_1: ${{ vars.TF_VAR_NAMED_VALUE_VALUE_1 }}
-      TF_VAR_named_value_value_2: ${{ secrets.TF_VAR_NAMED_VALUE_VALUE_2 }}
       TF_VAR_operation_policy_file_path: ${{ vars.TF_VAR_OPERATION_POLICY_FILE_PATH }}
+      
     steps:
     - name: Checkout
       uses: actions/checkout@v3
