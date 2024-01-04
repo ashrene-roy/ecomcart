@@ -1,0 +1,57 @@
+name: Run Azure Login with OpenID Connect
+on: [push]
+
+permissions:
+  id-token: write
+  contents: read
+      
+jobs: 
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      TF_VAR_storage_account_name: ${{ vars.TF_VAR_STORAGE_ACCOUNT_NAME }}
+      TF_VAR_storage_account_location: ${{ vars.TF_VAR_STORAGE_ACCOUNT_LOCATION }}
+      TF_VAR_storage_container_name: ${{ vars.TF_VAR_STORAGE_CONTAINER_NAME }}
+      TF_VAR_resource_group_name: ${{ vars.TF_VAR_RESOURCE_GROUP_NAME }}
+      TF_VAR_api_management_name: ${{ vars.TF_VAR_API_MANAGEMENT_NAME }}
+      TF_VAR_api_policy_file_path: ${{ vars.TF_VAR_API_POLICY_FILE_PATH }}
+      TF_VAR_api_content_value: ${{ vars.TF_VAR_API_CONTENT_VALUE }}
+      TF_VAR_named_value_value_1: ${{ vars.TF_VAR_NAMED_VALUE_VALUE_1 }}
+      TF_VAR_named_value_value_2: ${{ secrets.TF_VAR_NAMED_VALUE_VALUE_2 }}
+      TF_VAR_operation_policy_file_path: ${{ vars.TF_VAR_OPERATION_POLICY_FILE_PATH }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+    - name: Create Terraform remote backend
+      timeout-minutes: 15
+      run:  |
+        cd $GITHUB_WORKSPACE/infra/storage/terraform-backend
+        terraform init
+        terraform plan -input=false
+        terraform apply -auto-approve -input=false
+    - name: Create Legacy Inventory API
+      run: |
+        sh $GITHUB_WORKSPACE/infra/scripts/replace-placeholders.sh $GITHUB_WORKSPACE/infra/apim/legacy-inventory-api/LegacyInventory.wsdl $GITHUB_WORKSPACE/infra/apim/legacy-inventory-api/temp/ LegacyInventoryServiceURL=${{ vars.TF_VAR_NAMED_VALUE_VALUE_1 }}
+        cd $GITHUB_WORKSPACE/infra/apim/legacy-inventory-api
+        terraform init
+        terraform plan -var-file=dev.tfvars
+        terraform apply -auto-approve -input=false
+    # - name: 'Az CLI login'
+    #   uses: azure/login@v1
+    #   with:
+    #       client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    #       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    #       subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  
+    # - name: 'Run Azure CLI commands'
+    #   run: |
+    #       az account show
+    #       az group list
+    #       pwd
+    #       az rest --uri https://management.azure.com/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ secrets.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ApiManagement/service/${{ vars.APIM_NAME }}/apis/${{ vars.LEGACY_INVENTORY_APIM_API_ID }}/operations\?api-version\=2022-08-01
