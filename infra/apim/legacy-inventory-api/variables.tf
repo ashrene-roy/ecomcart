@@ -73,12 +73,3 @@ variable "named_value_value_2" {
   description = "Value of the named value"
 }
 
-# variable "operation_id" {
-#   type        = string
-#   description = "ID of the operation"
-# }
-
-# variable "operation_policy_file_path" {
-#   type        = string
-#   description = "File path for the operation policy"
-# }
