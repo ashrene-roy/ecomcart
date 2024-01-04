@@ -14,7 +14,9 @@ find "$FilePath" -type f | while read -r file; do
     for arg in "$@"; do
         placeholder="${arg%%=*}"
         value="${arg#"$placeholder="}"
-        filecontent=${filecontent//@@$placeholder@@/$value}
+        echo $placeholder
+        echo $value
+        filecontent=$(echo $filecontent | sed "s|@@$placeholder@@|$value|g")
     done
 
     new_file_name=$(basename "$file")
