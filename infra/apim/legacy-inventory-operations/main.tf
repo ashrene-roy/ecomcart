@@ -4,12 +4,16 @@ terraform {
     resource_group_name  = "ecomcart"
     storage_account_name = "ecomcartstoragedev"
     container_name       = "terraform-backend"
-    key                  = "actions.tfstate"
+    key                  = "getproductmetadatbyid-operation.tfstate"
   }
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "3.85.0"
+    }
+    azapi = {
+      source  = "azure/azapi"
+      version = "=1.11.0"
     }
   }
 }
@@ -17,15 +21,14 @@ provider "azurerm" {
   features {}
 }
 
-module "operation_policy" {
-  source = "../modules/operation_policy"
-  api = {
-    name                = var.api_name
-  }
-  api_management_name = var.api_management_name
-  resource_group_name = var.resource_group_name
-  operation = {
-    id                = var.operation_id
-    policy_file_path  = var.operation_policy_file_path
-  }
+resource "azapi_update_resource" "resource" {
+  type = var.resource_type
+  body = jsonencode({
+    properties : {
+      format : var.operation_content_format,
+      value : file(var.operation_policy_file_path)
+    }
+  })
+  parent_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.ApiManagement/service/${var.api_management_name}/apis/${var.api_name}/operations/${var.operation_id}"
+  name      = "policy"
 }
